@@ -1,0 +1,724 @@
+{{ 'customer.css' | asset_url | stylesheet_tag }}
+
+<script src="{{ 'add-to-cart.js' | asset_url }}"></script>
+
+<style>
+  a,
+  div,
+  button {
+    -webkit-tap-highlight-color: transparent;
+    -moz-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+  }
+
+</style>
+{% comment %}
+  <div class="customer order">
+    <svg style="display:none">
+      <symbol id="icon-discount" viewBox="0 0 12 12">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M7 0h3a2 2 0 012 2v3a1 1 0 01-.3.7l-6 6a1 1 0 01-1.4 0l-4-4a1 1 0 010-1.4l6-6A1 1 0 017 0zm2 2a1 1 0 102 0 1 1 0 00-2 0z" fill="currentColor">
+      </symbol>
+    </svg>
+    <div>
+      <h1 class="text-lg md:text-2xl lg:text-3xl font-activist text-ink-link uppercase">This MONk’S BELONGINGs</h1>
+      <a
+        href="{{ routes.account_url | append: '#order-history' }}"
+        class="font-mono text-ink-link underline hover:no-underline text-xs md:text-base"
+      >
+        {{- 'customer.account.return' | t -}}
+      </a>
+    </div>
+
+    <div id="table-address" class="font-mono bg-lime-200">
+      <div class="text-xs md:text-base">
+        <h2 class="text-base md:text-xl uppercase font-activist">{{ 'customer.order.title' | t: name: order.name }}</h2>
+        {%- assign order_date = order.created_at | time_tag: format: 'date_at_time' -%}
+        <p>{{ 'customer.order.date_html' | t: date: order_date }}</p>
+        {%- if order.cancelled -%}
+          {%- assign cancelled_at = order.cancelled_at | time_tag: format: 'date_at_time' -%}
+          <p>{{ 'customer.order.cancelled_html' | t: date: cancelled_at }}</p>
+          <p>{{ 'customer.order.cancelled_reason' | t: reason: order.cancel_reason_label }}</p>
+        {%- endif -%}
+
+        <table role="table" class="order-details">
+          <caption class="visually-hidden hidden">
+            {{ 'customer.order.title' | t: name: order.name }}
+          </caption>
+          <thead role="rowgroup" class="border border-solid border-ink">
+            <tr role="row" class="font-activist text-lg">
+              <th id="ColumnProduct" scope="col" role="columnheader">{{ 'customer.order.product' | t }}</th>
+              <th id="ColumnSku" scope="col" role="columnheader">{{ 'customer.order.sku' | t }}</th>
+              <th id="ColumnPrice" scope="col" role="columnheader" class="mr-2">{{ 'customer.order.price' | t }}</th>
+              <th id="ColumnQuantity" scope="col" role="columnheader">{{ 'customer.order.quantity' | t }}</th>
+              <th id="ColumnTotal" scope="col" role="columnheader">{{ 'customer.order.total' | t }}</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup" class="text-base border-l border-r border-ink border-solid border-t">
+            {%- for line_item in order.line_items -%}
+              <tr role="row" class="{% if forloop.index == 1 %}border-b border-solid border-ink{%endif%}">
+                <td
+                  id="Row{{ line_item.key }}"
+                  headers="ColumnProduct"
+                  role="rowheader"
+                  scope="row"
+                  data-label="{{ 'customer.order.product' | t }}"
+                  class="font-mono"
+                >
+                  <div>
+                    {%- if line_item.product.url != blank -%}
+                      <a href="{{ line_item.product.url }}" class="underline hover:no-underline">{{ line_item.title }}</a>
+                    {%- else -%}
+                      <p>{{ line_item.title }}</p>
+                    {%- endif -%}
+                    {%- assign property_size = line_item.properties | size -%}
+                    {%- unless line_item.selling_plan_allocation == null and property_size == 0 -%}
+                      <div class="properties hidden">
+                        {%- unless line_item.product.has_only_default_variant -%}
+                          <span>
+                            {{ line_item.variant.title }}
+                          </span>
+                        {%- endunless -%}
+                        {%- unless line_item.selling_plan_allocation == null -%}
+                          <span>
+                            {{ line_item.selling_plan_allocation.selling_plan.name }}
+                          </span>
+                        {%- endunless -%}
+                        {%- if property_size != 0 -%}
+                          {%- for property in line_item.properties -%}
+                            {% assign property_first_char = property.first | slice: 0 %}
+                            {%- if property.last != blank and property_first_char != '_' -%}
+                              <span>
+                                {{ property.first }}:&nbsp;
+                                {%- if property.last contains '/uploads/' -%}
+                                  <a href="{{ property.last }}">{{ property.last | split: '/' | last }}</a>
+                                {%- else -%}
+                                  {{ property.last }}
+                                {%- endif -%}
+                              </span>
+                            {%- endif -%}
+                          {%- endfor -%}
+                        {%- endif -%}
+                      </div>
+                    {%- endunless -%}
+
+                    {%- if line_item.line_level_discount_allocations != blank -%}
+                      <ul role="list" aria-label="{{ 'customer.order.discount' | t }}">
+                        {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                          <li>
+                            <svg aria-hidden="true" focusable="false" viewBox="0 0 12 12">
+                              <use href="#icon-discount" />
+                            </svg>
+                            {{- discount_allocation.discount_application.title }} (-
+                            {{- discount_allocation.amount | money -}}
+                            )
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+
+                    {%- if line_item.fulfillment -%}
+                      <div class="fulfillment">
+                        {%- assign created_at = line_item.fulfillment.created_at | time_tag: format: 'date' -%}
+                        <span>{{ 'customer.order.fulfilled_at_html' | t: date: created_at }}</span>
+
+                        {%- if line_item.fulfillment.tracking_url -%}
+                          <p>
+                            <a
+                              href="{{ line_item.fulfillment.tracking_url }}"
+                              class="text-ink-link underline hover:no-underline"
+                            >
+                              {{ 'customer.order.track_shipment' | t }}
+                            </a>
+                          </p>
+                        {%- endif -%}
+                        <span>
+                          {{ line_item.fulfillment.tracking_company }}
+                          {%- if line_item.fulfillment.tracking_number -%}
+                            #{{ line_item.fulfillment.tracking_number }}
+                          {%- endif -%}
+                        </span>
+                      </div>
+                    {%- endif -%}
+                  </div>
+                </td>
+                <td
+                  headers="Row{{ line_item.key }} ColumnSku"
+                  role="cell"
+                  data-label="{{ 'customer.order.sku' | t }}"
+                  class="font-mono"
+                >
+                  {{ line_item.sku }}
+                </td>
+                <td
+                  headers="Row{{ line_item.key }} ColumnPrice"
+                  role="cell"
+                  data-label="{{ 'customer.order.price' | t }}"
+                  class="font-mono"
+                >
+                  {%- if line_item.original_price != line_item.final_price or line_item.unit_price_measurement -%}
+                    <dl>
+                      {%- if line_item.original_price != line_item.final_price -%}
+                        <dt>
+                          <span class="visually-hidden">{{ 'products.product.price.regular_price' | t }}</span>
+                        </dt>
+                        <dd>
+                          <s>{{ line_item.original_price | money }}</s>
+                        </dd>
+                        <dt>
+                          <span class="visually-hidden">{{ 'products.product.price.sale_price' | t }}</span>
+                        </dt>
+                        <dd>
+                          <span>{{ line_item.final_price | money }}</span>
+                        </dd>
+                      {%- else -%}
+                        <dt>
+                          <span class="visually-hidden">{{ 'products.product.price.regular_price' | t }}</span>
+                        </dt>
+                        <dd>Rs.&nbsp;{{ line_item.original_price | money_without_currency }}</dd>
+                      {%- endif -%}
+                      {%- if line_item.unit_price_measurement -%}
+                        <dt>
+                          <span class="visually-hidden">{{ 'products.product.price.unit_price' | t }}</span>
+                        </dt>
+                        <dd>
+                          <span>
+                            {%- capture unit_price_separator -%}
+                              <span aria-hidden="true">/</span><span class="visually-hidden">{{ 'accessibility.unit_price_separator' | t }}&nbsp;</span>
+                            {%- endcapture -%}
+                            {%- capture unit_price_base_unit -%}
+                              {%- if line_item.unit_price_measurement.reference_value != 1 -%}
+                                {{- line_item.unit_price_measurement.reference_value -}}
+                              {%- endif -%}
+                              {{ line_item.unit_price_measurement.reference_unit }}
+                            {%- endcapture -%}
+                            <span data-unit-price>Rs.&nbsp;{{ line_item.unit_price | money_without_currency }}</span>
+                            {{- unit_price_separator -}}
+                            {{- unit_price_base_unit -}}
+                          </span>
+                        </dd>
+                      {%- endif -%}
+                    </dl>
+                  {%- else -%}
+                    <span>Rs.&nbsp;{{ line_item.final_price | money_without_currency }}</span>
+                  {%- endif -%}
+                </td>
+                <td
+                  headers="Row{{ line_item.key }} ColumnQuantity"
+                  role="cell"
+                  data-label="{{ 'customer.order.quantity' | t }}"
+                  class="font-mono"
+                >
+                  {{ line_item.quantity }}
+                </td>
+                <td
+                  headers="Row{{ line_item.key }} ColumnTotal"
+                  role="cell"
+                  data-label="{{ 'customer.order.total' | t }}"
+                  class="font-mono"
+                >
+                  {%- if line_item.original_line_price != line_item.final_line_price -%}
+                    <dl>
+                      <dt>
+                        <span class="visually-hidden">{{ 'products.product.price.regular_price' | t }}</span>
+                      </dt>
+                      <dd>
+                        <s>Rs.&nbsp;{{ line_item.original_line_price | money_without_currency }}</s>
+                      </dd>
+                      <dt>
+                        <span class="visually-hidden">{{ 'products.product.price.sale_price' | t }}</span>
+                      </dt>
+                      <dd>
+                        <span>Rs.&nbsp;{{ line_item.final_line_price | money_without_currency }}</span>
+                      </dd>
+                    </dl>
+                  {%- else -%}
+                    Rs.&nbsp;{{ line_item.original_line_price | money_without_currency }}
+                  {%- endif -%}
+                </td>
+              </tr>
+            {%- endfor -%}
+          </tbody>
+          <tfoot role="rowgroup" class="text-base border border-solid border-ink">
+            <tr role="row">
+              <td id="RowSubtotal" role="rowheader" scope="row" colspan="2" class="font-mono">
+                {{ 'customer.order.subtotal' | t }}
+              </td>
+              <td
+                headers="RowSubtotal"
+                role="cell"
+                colspan="3"
+                data-label="{{ 'customer.order.subtotal' | t }}"
+                class="font-mono"
+              >
+                {{ order.line_items_subtotal_price | money }}
+              </td>
+            </tr>
+            {%- if order.cart_level_discount_applications != blank -%}
+              <tr role="row">
+                {%- for discount_application in order.cart_level_discount_applications -%}
+                  <td id="RowDiscount" role="rowheader" scope="row" colspan="4" class="font-mono">
+                    {{ 'customer.order.discount' | t }}
+                    <span class="cart-discount">
+                      <svg aria-hidden="true" focusable="false" viewBox="0 0 12 12">
+                        <use href="#icon-discount" />
+                      </svg>
+                      {{- discount_application.title -}}
+                    </span>
+                  </td>
+                  <td
+                    headers="RowDiscount"
+                    role="cell"
+                    data-label="{{ 'customer.order.discount' | t }}"
+                    class="font-mono"
+                  >
+                    <div>
+                      <span>-{{ discount_application.total_allocated_amount | money }}</span>
+                      <span class="cart-discount">
+                        <svg aria-hidden="true" focusable="false" viewBox="0 0 12 12">
+                          <use href="#icon-discount" />
+                        </svg>
+                        {{- discount_application.title -}}
+                      </span>
+                    </div>
+                  </td>
+                {%- endfor -%}
+              </tr>
+            {%- endif -%}
+            {%- for shipping_method in order.shipping_methods -%}
+              <tr role="row">
+                <td id="RowShipping" role="rowheader" scope="row" colspan="2" class="font-mono">
+                  {{ 'customer.order.shipping' | t }} ({{ shipping_method.title }})
+                </td>
+                <td
+                  headers="RowShipping"
+                  role="cell"
+                  colspan="3"
+                  class="font-mono"
+                  data-label="{{ 'customer.order.shipping' | t }} ({{ shipping_method.title }})"
+                >
+                  {{ shipping_method.price | money }}
+                </td>
+              </tr>
+            {%- endfor -%}
+            {%- for tax_line in order.tax_lines -%}
+              <tr role="row">
+                <td id="RowTax" role="rowheader" scope="row" colspan="2" class="font-mono">
+                  {{ 'customer.order.tax' | t }} ({{ tax_line.title }}
+                  {{ tax_line.rate | times: 100 }}%)
+                </td>
+                <td
+                  headers="RowTax"
+                  role="cell"
+                  colspan="3"
+                  class="font-mono"
+                  data-label="{{ 'customer.order.tax' | t }} ({{ tax_line.title }} {{ tax_line.rate | times: 100 }}%)"
+                >
+                  {{ tax_line.price | money }}
+                </td>
+              </tr>
+            {%- endfor -%}
+            <tr role="row">
+              <td id="RowTotal" role="rowheader" scope="row" class="font-mono text-base md:text-lg" colspan="2">
+                {{ 'customer.order.total' | t }}
+              </td>
+              <td
+                headers="RowTotal"
+                role="cell"
+                colspan="3"
+                class="font-mono text-base md:text-lg"
+                data-label="{{ 'customer.order.total' | t }}"
+              >
+                {{ order.total_price | money_with_currency }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="text-sm md:text-base">
+        <div>
+          <h2 class="text-base md:text-xl font-activist uppercase">{{ 'customer.order.billing_address' | t }}</h2>
+          <p>
+            <strong class="text-sm md:text-base">{{ 'customer.order.payment_status' | t }}:</strong>
+            {{ order.financial_status_label }}
+          </p>
+          {{ order.billing_address | format_address }}
+        </div>
+        <div>
+          <h2 class="text-base md:text-xl font-activist uppercase">{{ 'customer.order.shipping_address' | t }}</h2>
+          <p>
+            <strong class="text-sm md:text-base">{{ 'customer.order.fulfillment_status' | t }}:</strong>
+            {{ order.fulfillment_status_label }}
+          </p>
+          {{ order.shipping_address | format_address }}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endcomment %}
+
+<script>
+  async function addingProperties() {
+    {% assign lineItems = order.metafields.updatedLineItems.lineItems %}
+    {% assign propertiesExist = lineItems != blank %}
+    let allLineItems = [];
+
+
+    {% if propertiesExist %}
+      {% for item in lineItems %}
+        {% assign properties = item.properties | json %}
+
+        allLineItems.push({
+          "id":'{{ item.variant_id }}',
+          "properties": {{ item.properties | json}},
+          "quantity": '{{ item.quantity }}',
+          "isLast": {{forloop.last}}
+        })
+      {% endfor %}
+    {% else %}
+      let convertedProperties;
+      {% for lineitem in order.line_items %}
+        convertedProperties = arrayToObject({{lineitem.properties | json}})
+        allLineItems.push({
+          "id":'{{ lineitem.variant_id }}',
+          "properties": convertedProperties,
+          "quantity": '{{ lineitem.quantity }}',
+          "isLast": {{forloop.last}}
+        })
+      {% endfor %}
+    {% endif %}
+
+    for (let i = 0 ; i < allLineItems.length ; i++){
+      const info = allLineItems[i]
+      await addTocart( info.id , info.properties ,  info.quantity , info.isLast);
+    }
+  }
+
+  function arrayToObject(properties) {
+    let propertiesObject = {};
+    properties.forEach((info) => {
+      propertiesObject[info[0]] = info[1];
+    });
+    return propertiesObject;
+  }
+</script>
+
+<div class="flex justify-center w-full h-full bg-canvas flex-col items-center gap-2 font-mono tracking-1 text-ink">
+  <div class=" flex md:hidden flex-col  h-fit w-full ">
+    <button class="flex md:hidden justify-between p-3 border-b-outer border-ink" onclick="orderSummary()">
+      <div class="flex gap-1">
+        <span class="mt-[4px]"><img src="{{ 'cart.svg' | asset_url }}" alt="cart" class="w-2 h-2 "> </span>
+        <div class="showOrderSummary flex gap-1 items-center pt-[3px]">
+          <span class="text-sm text-[#1773B0]">Show order summary</span>
+          <img src="{{ 'down-arrow.svg' | asset_url }}" alt="ArrowDown" class="w-[14px] mt-[2px]">
+        </div>
+        <div class="hideOrderSummary   hidden">
+          <div class="flex gap-1 items-center pt-[3px]">
+            <span class="text-sm text-[#1773B0]">Hide order summary</span>
+            <img src="{{ 'arrow-up.svg' | asset_url }}" alt="ArrowUp" class="w-[14px]  mt-[2px]">
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="text-[17px]">
+          &#8377;
+          {{- order.total_price | minus: order.total_refunded_amount | money_without_currency -}}
+        </span>
+      </div>
+    </button>
+    <div class="flex w-full">
+      {% render 'order-summary', order: order %}
+    </div>
+  </div>
+  <div class="flex justify-between w-full max-w-[1150px] mt-1 md:mt-3 flex-col md:flex-row px-3  gap-3">
+    <div class="flex gap-[4px]">
+      <button class="flex items-start mt-[6px]" id="goBackButton">
+        <img src="{{ 'left-arrow.svg' | asset_url }}" alt="ArrowDown" class="w-3 ">
+      </button>
+      <div class="flex flex-col">
+        <span class="text-lg font-bold">
+          {{- 'customer.order.order' | t }}
+          {{ order.name -}}
+        </span>
+        <span class="text-sm">
+          {{- 'customer.order.confirmed' | t }}
+          {{ order.created_at | date: '%B %d ' -}}
+        </span>
+      </div>
+    </div>
+    <div class="flex">
+      <button
+        class="cta-color text-base text-canvas px-4 py-2 border  border-ink rounded-full w-full"
+        onclick="addingProperties()"
+      >
+        {{ 'customer.order.buy_again' | t |upcase }}
+      </button>
+    </div>
+  </div>
+  <div class="flex flex-col gap-5 w-full max-w-[1150px] px-3 pb-3">
+    <div class="flex gap-5">
+      <div class="flex flex-col gap-3 w-full ">
+        {% comment %} checking for gitcard {% endcomment %}
+        {% assign isCancelled = order.cancelled %}
+        {% for item in order.line_items %}
+          {% assign isProductGiftCard = item.product.gift_card? %}
+        {% endfor %}
+        {% comment %} order update container  {% endcomment %}
+        <div class="flex w-full flex-col bg-canvas-light rounded-lg p-[21px] border-outer border-solid border-ink">
+          {% comment %} shipping details url {% endcomment %}
+          <div class="flex text-sm">
+            {%- for line_item in order.line_items -%}
+              {%- if line_item.fulfillment and isProductGiftCard != true -%}
+                <div class="mb-2">
+                  {%- if line_item.fulfillment.tracking_number == null -%}
+                    <span class="text-sm">{{ 'customer.order.no_tracking_url' | t }}</span>
+                  {% else %}
+                    <span>
+                      {{ line_item.fulfillment.tracking_company }}
+                      {%- if line_item.fulfillment.tracking_number -%}
+                        {%- if line_item.fulfillment.tracking_url -%}
+                          <a
+                            href="{{ line_item.fulfillment.tracking_url }}"
+                            class="text-ink-link hover:text-[#105989] underline"
+                            target="_blank"
+                          >
+                            {{- line_item.fulfillment.tracking_number -}}
+                          </a>
+                        {%- else -%}
+                          <span style="color: gray;">{{- line_item.fulfillment.tracking_number -}}</span>
+                        {%- endif -%}
+                      {%- endif -%}
+                    </span>
+                  {%- endif -%}
+                </div>
+              {%- endif -%}
+              {% break %}
+            {% endfor %}
+          </div>
+
+          <div class="flex">
+            <div class="flex flex-col gap-2 w-full">
+              {% assign lastContent = true %}
+              {% if isCancelled %}
+                {% assign statusUpdateDate = order.cancelled_at | date: '%B %-d, %Y' %}
+                {% render 'shipping-detail-compontent',
+                  orderStatus: 'customer.order.cancelled',
+                  statusUpdateDate: statusUpdateDate,
+                  statusContent: 'customer.order.order_cancelled',
+                  lastContent: true,
+                  description: true
+                %}
+              {% else %}
+                {% if order.fulfillment_status == 'fulfilled' %}
+                  {% if isProductGiftCard == true %}
+                    {% assign lastContent = false %}
+                    {% assign statusUpdateDate = order.line_items[0].fulfillment.created_at | date: '%B %-d, %Y' %}
+                    {% render 'shipping-detail-compontent',
+                      orderStatus: 'customer.order.delivered',
+                      statusUpdateDate: statusUpdateDate,
+                      statusContent: 'gift_cards.order_details_gift.send_email',
+                      lastContent: true,
+                      description: true
+                    %}
+                  {% else %}
+                    {% assign statusUpdateDate = order.line_items[0].fulfillment.created_at | date: '%B %-d, %Y' %}
+                    {% render 'shipping-detail-compontent',
+                      orderStatus: 'customer.order.on_its_way',
+                      statusUpdateDate: statusUpdateDate,
+                      statusContent: 'customer.order.order_shipped',
+                      lastContent: true,
+                      description: true
+                    %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+
+              {% assign description = true %}
+              {% if order.fulfillment_status == 'fulfilled' or isCancelled %}
+                {% assign containerName = 'confirmedContainer' %}
+                {% assign toShow = 'hidden' %}
+                {% assign description = false %}
+              {% endif %}
+
+              <div class="{{containerName}} {{toShow}}">
+                {% assign statusUpdateDate = order.created_at | date: '%B %-d, %Y' %}
+                {% render 'shipping-detail-compontent',
+                  orderStatus: 'customer.order.confirmed',
+                  statusUpdateDate: statusUpdateDate,
+                  statusContent: 'customer.order.order_received',
+                  lastContent: lastContent,
+                  description: description
+                %}
+              </div>
+
+              {% if isProductGiftCard != true %}
+                <div class="submittedContainer hidden">
+                  {% assign statusUpdateDate = order.created_at | date: '%B %-d, %Y' %}
+                  {% render 'shipping-detail-compontent',
+                    orderStatus: 'customer.order.submitted',
+                    statusUpdateDate: statusUpdateDate,
+                    lastContent: false,
+                    description: false
+                  %}
+                </div>
+              {% endif %}
+            </div>
+
+            {% comment %} show and hide content button  {% endcomment %}
+            <div class="flex justify-end md:w-full h-fit" onclick="detailButton()">
+              <div class="showDetailsButton">
+                <button class="flex items-center gap-1 h-fit text-ink-link hover:text-[#105989] bg-[#F0F5FF] md:bg-canvas-light p-1 md:p-0 rounded-md">
+                  <span class="hidden md:block text-sm">{{ 'customer.order.show_details' | t }}</span>
+                  <img src="{{ 'down-arrow.svg' | asset_url }}" alt="ArrowDown" class="w-2 mt-[2px]">
+                </button>
+              </div>
+              <div class="hideDetailsButton hidden">
+                <button class="flex items-center gap-1 h-fit text-ink-link hover:text-[#105989]  bg-[#F0F5FF] md:bg-canvas-light p-1 md:p-0 rounded-md">
+                  <span class="hidden md:block text-sm">{{ 'customer.order.hide_details' | t }}</span>
+                  <img src="{{ 'arrow-up.svg' | asset_url }}" alt="ArrowUp" class="w-2  mt-[2px]">
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {% comment %} gift card extra content  {% endcomment %}
+          {% if isProductGiftCard == true %}
+            <div class="flex flex-col gap-1 mt-2">
+              <div class="flex">
+                <span class="font-bold text-[17px]">{{ 'gift_cards.order_details_gift.gift_card' | t }}</span>
+              </div>
+              <div class="flex">
+                <span class="text-sm">
+                  {{- 'gift_cards.order_details_gift.gift_cart_received' | t }}
+                  <a href="mailto:{{shop.email}}" class="underline text-ink-link">contact us.</a></span
+                >
+              </div>
+              <div>
+                <button class="bg-canvas-light  px-4  py-2 text-base text-canvas border border-ink  rounded-full cta-color">
+                  {{ 'gift_cards.order_details_gift.resend_email' | t  | upcase}}
+                </button>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+        {% comment %} order details container {% endcomment %}
+        <div class="flex flex-col p-[21px] bg-canvas-light w-full rounded-lg border-outer border-solid border-ink">
+          <div class="flex w-full text-[17px] font-bold">{{ 'customer.order.order_details' | t }}</div>
+          <div class="flex gap-2 justify-between w-full mt-2 text-sm flex-col md:flex-row">
+            <div class="grid grid-row-3 w-full">
+              <div class="flex flex-col gap-3">
+                <div class="flex gap-1 flex-col">
+                  <span class="text-[#707070]">{{ 'customer.order.contact_information' | t }}</span>
+                  <div class="flex flex-col">
+                    <p>{{ customer.name }}</p>
+                    <p>{{ customer.email }}</p>
+                  </div>
+                </div>
+                {% if isProductGiftCard != true %}
+                  <div class="flex flex-col gap-1">
+                    <div>
+                      <span class="text-[#707070]">{{ 'customer.order.shipping_address' | t }}</span>
+                    </div>
+                    <div>
+                      {{ order.shipping_address | format_address }}
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <div>
+                      <span class="text-[#707070]">{{ 'customer.order.shipping_method' | t }}</span>
+                    </div>
+                    <div>
+                      {% if order.shipping_methods[0].title %}
+                        {{ order.shipping_methods[0].title }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="grid grid-row-2 w-full gap-3 h-fit">
+              {% assign successTransactionFound = false %}
+
+              {% for transaction in order.transactions %}
+                {% if transaction.status == 'success' and transaction.payment_details.credit_card_number != blank %}
+                  {% assign amountPaid = transaction.amount %}
+                  {% assign cardEnding = transaction.payment_details.credit_card_number | slice: -1 %}
+                  {% assign successTransactionFound = true %}
+
+                  {% if successTransactionFound %}
+                    <div class="flex flex-col gap-1">
+                      <span class="text-[#707070]">{{ 'customer.order.payment' | t }}</span>
+                      <div class="flex md:grid md:gap-[4px] lg:gap-0 lg:flex">
+                        <span class="mr-1">
+                          {{ transaction.payment_details.credit_card_company | payment_type_svg_tag }}
+                        </span>
+                        <span class="tracking-1">
+                          {{- 'customer.order.ending_with' | t }}
+                          {{ cardEnding }} - &#8377;{{ amountPaid | money_without_currency -}}
+                        </span>
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+
+              <div class="flex flex-col gap-1">
+                <div>
+                  <span class="text-[#707070]">
+                    {{ 'customer.order.billing_address' | t }}
+                  </span>
+                </div>
+                <div>
+                  {% if order.billing_address %}
+                    {{ order.billing_address | format_address }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% comment %} order summary container {% endcomment %}
+      <div class="orderSummaryContainerDesktop hidden md:flex flex-col p-[21px] bg-canvas-light rounded-lg h-fit w-full max-w-58 border-outer border-ink border-solid">
+        <div class="hidden md:block ">
+          <span class="text-base font-bold">Order summary</span>
+        </div>
+        {% render 'order-summary', order: order %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function detailButton() {
+    toggleClass('.showDetailsButton', 'hidden');
+    toggleClass('.hideDetailsButton', 'hidden');
+    toggleClass('.submittedContainer', 'hidden');
+    toggleClass('.confirmedContainer', 'hidden');
+  }
+
+  function toggleClass(selector, className) {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.classList.toggle(className);
+    }
+  }
+
+  document.getElementById('goBackButton').addEventListener('click', function () {
+    window.history.back();
+  });
+
+  function orderSummary() {
+    const orderSummaryDetails = document.querySelector('.orderSummaryDetails');
+    const showOrderSummary = document.querySelector('.showOrderSummary');
+    const hideOrderSummary = document.querySelector('.hideOrderSummary');
+
+    orderSummaryDetails.classList.toggle('h-0');
+    orderSummaryDetails.classList.toggle('overflow-hidden');
+    showOrderSummary.classList.toggle('hidden');
+    hideOrderSummary.classList.toggle('hidden');
+  }
+</script>

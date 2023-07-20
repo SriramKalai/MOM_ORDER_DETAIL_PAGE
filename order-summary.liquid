@@ -1,0 +1,166 @@
+{% for item in order.line_items %}
+  {% assign isProductGiftCard = item.product.gift_card? %}
+{% endfor %}
+
+{% assign itemCount = 0 %}
+{% for item in order.line_items %}
+  {% assign itemCount = itemCount | plus: item.quantity %}
+  {% assign itemCount = itemCount | minus: item.refunded_quantity %}
+{% endfor %}
+
+<div class="orderSummaryDetails h-0 overflow-hidden md:block md:h-fit md:overflow-y-auto w-full">
+  <div class="mb-2 md:mb-0 border-b-outer border-ink md:border-b-0 px-3 pb-3 md:px-0 md:pb-0">
+    {% if itemCount == 0 and order.cancelled != true %}
+      <div class="flex mt-[21px] ">
+        <span class="text-[13px] text-[#70706F]">No additional items in this order are eligible for return.</span>
+      </div>
+    {% endif %}
+    <div class="flex flex-col max-h-53 mt-3 h-fit overflow-hidden gap-3 themed-scrollbar" style="overflow-y: auto;">
+      {%- for line_item in order.line_items -%}
+        {% if isProductGiftCard == true %}
+          {% assign height = '90px' %}
+        {% endif %}
+        <div class="flex w-full" style="min-height:{{height}}">
+          <div class="flex justify-center items-center text-sm">
+            <div class="w-8 h-8 border-[1px] rounded-lg relative">
+              <div class="bg-[#737373] text-white text-xs rounded-[50%] flex justify-center items-center w-[22px] h-[22px] absolute top-[-14px] right-[-10px] bg-opacity-80">
+                {{ line_item.quantity }}
+              </div>
+              <div class="flex justify-center w-8">
+                {% if line_item.image %}
+                  <img src="{{ line_item.image | image_url: width:48, height: 64 , crop: "center"}} " class="h-8 w-6">
+                {% else %}
+                  <img src="{{ 'callbackimage.png' | asset_url }}" alt="callbackimage" class="rounded-lg w-full h-full">
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col justify-center items-start ml-2 w-full">
+            {% assign title = line_item.title | split: ' - ' %}
+            <span class="font-bold text-sm">{{ title[0] }}</span>
+            <span class="text-sm text-[#70706F]">{{ title[1] }}</span>
+            {%- for properties in line_item.properties -%}
+              {% assign key = properties[0] | strip | downcase %}
+              {% assign value = properties[1] | strip %}
+              {% assign startingLetter = key | slice: 0 %}
+              {%- unless startingLetter == '_' -%}
+                {% if key != 'virtual consultation' %}
+                  <span class="text-[#70706F] text-[13px]">{{ key }} : {{ value }}</span>
+                {% endif %}
+              {%- endunless -%}
+            {%- endfor -%}
+            {% if isProductGiftCard %}
+              {% assign eachItemPrice = line_item.variant.price | money_without_currency %}
+            {% else %}
+              {% assign eachItemPrice = line_item.price | money_without_currency %}
+            {% endif %}
+            {% if line_item.quantity > 1 %}
+              <span class="text-xs text-[#707070] mt-[2px]">&#8377;{{ eachItemPrice }}/ea</span>
+            {% endif %}
+            {% for line in order.subtotal_line_items %}
+              {% if line.id == line_item.id %}
+                {% if line.refunded_quantity > 0 %}
+                  {% assign refundedPriceForEach = line.line_price %}
+                  {% assign refundedWithOutTax = refundedWithOutTax | plus: line.line_price %}
+                  {% for tax_line in line.tax_lines %}
+                    {% assign totalTax = totalTax | plus: tax_line.price %}
+                  {% endfor %}
+                  <span class="text-[#0A801F] text-xs">&#8377; {{ 'customer.order.refunded' | t | upcase }}</span>
+                {% else %}
+                  {% assign refundedPriceForEach = 0 %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {% assign Discount = line_item.price | minus: line_item.variant.price %}
+            {% if isProductGiftCard and Discount < 0 %}
+              <div class="flex mt-1 text-xs gap-[5px] items-end">
+                <img src="{{ 'discount-tag.svg' | asset_url }}" alt="discountTag" class="w-[14px] h-[14px]">
+                <span>{{ 'customer.order.discount' | t | upcase }}</span>
+                <span>({{ Discount | money_without_currency }})</span>
+              </div>
+            {% endif %}
+          </div>
+          <div class="flex justify-center items-center flex-col text-sm">
+            {% if isProductGiftCard and Discount < 0 %}
+              <del class="text-xs text-[#707070]">&#8377;{{ line_item.variant.price | money_without_currency }}</del>
+            {% endif %}
+            &#8377;
+            {{- line_item.price | times: line_item.quantity | minus: refundedPriceForEach | money_without_currency }}
+          </div>
+        </div>
+      {%- endfor %}
+    </div>
+    <table class="w-full text-sm mt-2">
+      <tr>
+        <td class="pb-1">{{ 'customer.order.subtotal' | t }}</td>
+        <td class="text-right pb-1">
+          &#8377;{{ order.line_items_subtotal_price | minus: refundedWithOutTax | money_without_currency }}
+        </td>
+      </tr>
+      {%- if order.cart_level_discount_applications != blank -%}
+        <tr>
+          {%- for discount_application in order.cart_level_discount_applications -%}
+            <td class="pb-1">
+              <div class="flex gap-1 md:gap-2">
+                {{ 'customer.order.discount' | t }}
+                <div class="flex gap-[5px] flex-wrap items-end">
+                  <img src="{{ 'discount-tag.svg' | asset_url }}" alt="discountTag" class="w-2 h-2">
+                  {{- discount_application.title | upcase -}}
+                </div>
+              </div>
+            </td>
+            <td class="text-right pb-1">
+              <span>-&#8377;{{ discount_application.total_allocated_amount | money_without_currency -}}</span>
+            </td>
+          {%- endfor -%}
+        </tr>
+      {%- endif -%}
+      <tr>
+        {%- for shipping_method in order.shipping_methods -%}
+          <td class="pb-1">{{ 'customer.order.shipping' | t }}</td>
+          <td class="text-right pb-1">
+            {% if shipping_method.price == 0 %}
+              <span>{{ 'customer.order.free' | t }}</span>
+            {% else %}
+              <span>{{ shipping_method.price }}</span>
+            {%- endif -%}
+          </td>
+        {% endfor %}
+        {% if order.shipping_methods.size == 0 %}
+          <td class="pb-1">{{ 'customer.order.shipping' | t }}</td>
+          <td class="text-right pb-1">
+            <span>{{ 'customer.order.free' | t }}</span>
+          </td>
+        {% endif %}
+      </tr>
+      {%- for tax_line in order.tax_lines -%}
+        {% if tax_line.price != 0 %}
+          <tr>
+            <td class="pb-1">{{ 'customer.order.taxes' | t }}</td>
+            <td class="text-right pb-1">&#8377;{{ tax_line.price | minus: totalTax | money_without_currency }}</td>
+          </tr>
+        {% endif %}
+      {%- endfor -%}
+    </table>
+    <table class="mt-2 w-full">
+      <tr>
+        <td class="text-[17px]">{{ 'customer.order.total' | t }}</td>
+        <td class="text-right text-[17px]">
+          <abbr class="text-[12px] text-[#707070] mr-1">{{ 'customer.order.inr' | t }} </abbr> &#8377;
+          {{- order.total_price | minus: order.total_refunded_amount | money_without_currency }}
+        </td>
+      </tr>
+    </table>
+    {% if order.total_refunded_amount != 0 %}
+      <table class="mt-2 w-full">
+        <tr>
+          <td class="text-sm">{{ 'customer.order.refunded' | t }}</td>
+          <td class="text-right text-[17px]">
+            - &#8377;
+            {{- order.total_refunded_amount | money_without_currency }}
+          </td>
+        </tr>
+      </table>
+    {% endif %}
+  </div>
+</div>

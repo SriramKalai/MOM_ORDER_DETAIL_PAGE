@@ -1,0 +1,35 @@
+{% assign fontSize = 14 %}
+{% if description %}
+  {% assign fontSize = 17 %}
+{% endif %}
+<div class="flex gap-1">
+  <div class="mt-[3px]">
+    <div class="w-[21px] h-[21px] flex items-center">
+      {% assign convertedOrderStatus = orderStatus | t %}
+      {% case convertedOrderStatus %}
+        {% when 'Cancelled' %}
+          {%- render 'cancel' -%}
+        {% when 'Delivered' %}
+          {% render 'deliver-icon' %}
+        {% when 'On its way' %}
+          {% render 'on-the-way-icon' %}
+        {% else %}
+          {% render 'confirmed-icon' %}
+      {% endcase %}
+    </div>
+    {% if lastContent %}
+      <div class="h-full flex items-center justify-center pb-3">
+        <div class="h-full border-l border-dashed border-black"></div>
+      </div>
+    {% endif %}
+  </div>
+  <div class="flex flex-col shrink-0">
+    <span class="font-bold" style="font-size:{{fontSize}}px">{{ convertedOrderStatus }}</span>
+    <span class="text-sm">
+      {{ statusUpdateDate }}
+    </span>
+    {% if description %}
+      <span class="mt-2 text-sm">{{ statusContent | t }}</span>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,1196 @@
+{{ 'custom-customer.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'add-to-cart.js' | asset_url }}"></script>
+<style>
+  .visuallyhidden {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    white-space: nowrap;
+  }
+
+  a,
+  div {
+    -webkit-tap-highlight-color: transparent;
+    -moz-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+  }
+
+  .pagination li {
+    display: inline;
+    margin: 0 5px;
+  }
+</style>
+<script src="https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js"></script>
+
+<section class="py-0 px-0 md:px-0 lg:px-0 md:py-0">
+  <h1 class="text-lg md:text-2xl lg:text-3xl font-activist text-ink-link uppercase text-left pt-5 px-2 md:px-3 lg:px-10 md:pt-10">
+    This MONk’S BELONGINGs
+  </h1>
+
+  <div class="flex flex-col  items-stretch mt-4 md:mt-4">
+    <!-- side menu -->
+    <div class="relative">
+      <div class="relative  pb-1 px-1 md:px-3 lg:px-10 md:pb-4 z-10 flex justify-between md:justify-start md:flex-col text-sm md:text-base lg:text-lg uppercase font-activist md:mr-6 lg:mr-12 overflow-x-auto scrollbar-hide">
+        <h2
+          id="profile-menu-item"
+          class="mr-2 md:mr-0 hover:cursor-pointer"
+          onclick="myFunction(event,'profile-div','#profile')"
+        >
+          profile
+        </h2>
+        <h2
+          id="order-history-menu-item"
+          class="mr-2 md:mr-0 md:mt-4 lg:mt-6 flex-none hover:cursor-pointer"
+          onclick="myFunction(event,'order-history-div','#order-history')"
+        >
+          order history
+        </h2>
+        <h2
+          id="measurement-menu-item"
+          class="md:mt-4 lg:mt-6 flex-none hover:cursor-pointer"
+          onclick="myFunction(event,'measurements-div','#measurements')"
+        >
+          measurements
+        </h2>
+        <!--
+          <h2 class="mr-2 md:mr-0 md:mt-4 lg:mt-6 flex-none hidden md:block"><a href="{{ routes.account_login_url | append: '#recover' }}">change password</a></h2>
+        -->
+      </div>
+      <hr class="md:hidden absolute z-0 border-solid border-ink w-full bottom-0">
+    </div>
+
+    <!-- profile content -->
+    <div id="profile-div" class="ac-container flex-1 hide mt-4 md:mt-0">
+      <div id="profile-container" class="relative border border-ink border-solid font-mono text-sm md:text-base">
+        <button
+          id="edit_profile"
+          class="mb-2 md:absolute uppercase text-sm md:text-base font-activist px-1 border border-ink border-solid bg-canvas-lighter"
+        >
+          <a href="{{ routes.account_addresses_url }}">edit profile</a>
+        </button>
+
+        <button
+          id="changepassword"
+          class="mb-2 inline md:absolute uppercase text-sm md:text-base font-activist px-1 border border-ink border-solid bg-canvas-lighter"
+        >
+          <a href="{{ routes.account_login_url | append: '#recover' }}">change password</a>
+        </button>
+
+        <h3 class="font-activist uppercase mt-2 md:mt-0">email address</h3>
+        <p class="">{{ customer.email }}</p>
+
+        <h3 class="font-activist uppercase mt-4">name</h3>
+        <p>{{ customer.name }}</p>
+
+        <h3 class="font-activist uppercase mt-4">address</h3>
+        <p class="">{{ customer.default_address | format_address }}</p>
+
+        <h3 class="font-activist uppercase mt-4">pincode</h3>
+        <p class="">{{ customer.default_address.zip }}</p>
+
+        <h3 class="font-activist uppercase mt-4">mobile phone</h3>
+        <p class="">{{ customer.default_address.phone }}</p>
+      </div>
+    </div>
+
+    <!-- order history -->
+    <script>
+      
+      function viewChange(info) {
+        const isGridView = info === 'grid';
+        const gridViewButton = document.querySelector('.gridView');
+        const listViewButton = document.querySelector('.listView');
+        const productListView = document.querySelector('.productListView');
+        const productGridView = document.querySelector('.productGridView');
+        const gridButtonChange = document.querySelector('.gridViewButton');
+        const listButtonChange = document.querySelector('.listViewButton');
+
+        if (
+          (isGridView && listViewButton.classList.contains('bg-white')) ||
+          (!isGridView && gridViewButton.classList.contains('bg-white'))
+        ) {
+          [productGridView, productListView].forEach((element) => element.classList.toggle('hidden'));
+          [gridViewButton, listViewButton].forEach((element) => element.classList.toggle('bg-white'));
+          [gridButtonChange, listButtonChange].forEach((element) => element.classList.toggle('text-[#105989]'));  
+          [gridButtonChange, listButtonChange].forEach((element) => element.classList.toggle('hover:text-opacity-100')); 
+          [gridButtonChange, listButtonChange].forEach((element) => element.classList.toggle('text-opacity-50')); 
+          [gridButtonChange, listButtonChange].forEach((element) => element.classList.toggle('text-black')); 
+          [gridButtonChange, listButtonChange].forEach((element) => element.classList.toggle('hover:text-[#1F8DD6]')); 
+
+        }
+      }
+
+      function showBuybutton(orderName) {
+        const buyAgainButton = document.querySelector(`.button${orderName}`);
+        const upArrow = document.querySelector(`.up${orderName}`);
+        const downArrow = document.querySelector(`.down${orderName}`);
+        upArrow.classList.toggle('hidden');
+        downArrow.classList.toggle('hidden');
+        buyAgainButton.classList.toggle('hidden');
+      }
+
+      document.addEventListener('click', function (event) {
+        const modal = document.getElementById('modal');
+        if (event.target === modal) {
+          hideModal();
+        }
+      });
+
+      function  showmodal() {
+        const menuBackdrop = document.getElementById('menu-backdrop');
+        if (menuBackdrop) {
+          menuBackdrop.style.left = "0";
+          menuBackdrop.style.opacity = "1";
+        }
+         openmodal();
+         };
+
+      function hideModal(){
+        const menuBackdrop = document.getElementById('menu-backdrop');
+        if(menuBackdrop){
+          menuBackdrop.style.left = "-150%";
+          menuBackdrop.style.opacity = "0";
+        } 
+        closeModal();
+      }   
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var checkboxes = document.querySelectorAll('input[name="sortOption"]');
+        checkboxes.forEach(function (checkbox) {
+          checkbox.addEventListener('change', function () {
+            if (this.checked) {
+              sortAndRenderOrders(this.value);
+            }
+          });
+        });
+      });
+
+      {% comment %} function removeCommasAndConvertToNumber(str) {
+        return parseFloat(str.replace(/,/g, ''));
+      } {% endcomment %}
+
+      {% comment %} function sortAndRenderOrders(sortOption) {
+        if (sortOption === 'orderTotalLowToHigh') {
+          AllOrders.sort((a, b) => {
+            const numA = parseFloat(a.totalPrice.replace(/,/g, ''));
+            const numB = parseFloat(b.totalPrice.replace(/,/g, ''));
+            return numA - numB;
+          });
+        } else if (sortOption === 'orderTotalHighToLow') {
+          AllOrders.sort((a, b) => {
+            const numA = parseFloat(a.totalPrice.replace(/,/g, ''));
+            const numB = parseFloat(b.totalPrice.replace(/,/g, ''));
+            return numB - numA;
+          });
+        } else if (sortOption === 'newestToOldest' || sortOption === 'orderNumHighToLow') {
+          AllOrders.sort((a, b) => {
+            const numA = parseInt(a.name.substring(1));
+            const numB = parseInt(b.name.substring(1));
+            return numB - numA;
+          });
+        } else if (sortOption === 'oldestToNewest' || sortOption === 'orderNumLowToHigh') {
+          AllOrders.sort((a, b) => {
+            const numA = parseInt(a.name.substring(1));
+            const numB = parseInt(b.name.substring(1));
+            return numA - numB;
+          });
+        }
+        ordersToDisplay = AllOrders.slice(0, ordersDisplayed);
+        renderOrdersInGrid(ordersToDisplay);
+        renderOrdersInList(ordersToDisplay);
+      } {% endcomment %}
+
+      function removeCommasAndConvertToNumber(str) {
+        return parseFloat(str.replace(/,/g, ''));
+      }
+      
+      function sortByOrderTotalLowToHigh(a, b) {
+        const numA = removeCommasAndConvertToNumber(a.totalPrice);
+        const numB = removeCommasAndConvertToNumber(b.totalPrice);
+        return numA - numB;
+      }
+      
+      function sortByOrderNum(a, b) {
+        const numA = parseInt(a.name.substring(1));
+        const numB = parseInt(b.name.substring(1));
+        return numA - numB;
+      }
+      
+      function sortAndRenderOrders(sortOption) {
+        switch (sortOption) {
+          case 'orderTotalLowToHigh':
+            AllOrders.sort(sortByOrderTotalLowToHigh);
+            break;
+          case 'orderTotalHighToLow':
+            AllOrders.sort(sortByOrderTotalLowToHigh);
+            AllOrders.reverse();
+            break;
+          case 'newestToOldest':
+          case 'orderNumHighToLow':
+            AllOrders.sort(sortByOrderNum);
+            AllOrders.reverse();
+            break;
+          case 'oldestToNewest':
+          case 'orderNumLowToHigh':
+            AllOrders.sort(sortByOrderNum);
+            break;
+        }
+      
+        ordersToDisplay = AllOrders.slice(0, ordersDisplayed);
+        renderOrdersInGrid(ordersToDisplay);
+        renderOrdersInList(ordersToDisplay);
+      }
+      
+
+      function getImageUrl(imageList, imageId) {
+        return imageList.filter(function (imageList) {
+          return imageList.id == imageId;
+        });
+      }
+
+      function findImageSrc(lineItem) {
+        const imageId = lineItem.variant.image_id;
+        const imageUrl = getImageUrl(lineItem.product.images, imageId);
+        return imageUrl[0];
+      }
+
+      function imageList(lineItems, productCount) {
+        let imageListTemplate = ``;
+        if (productCount === 1) {
+          lineItems.forEach((items, index) => {
+            const imageSrc = items.product.image != null ? findImageSrc(items) : '';
+            imageListTemplate += `
+          <div class="col-span-1 w-6 h-6 rounded-lg">
+            <img src="${
+              items.product.image == null
+                ? '{{ 'callbackimage.png' | asset_url }}'
+                : imageSrc.src
+            }" class="rounded-[50%] border-[2px] border-${
+              items.product.image == null ? 'gray-200' : 'white'
+            }  object-cover h-6 w-6">
+        </div> `;
+          });
+        } else if (productCount === 2 || productCount === 3) {
+          lineItems.forEach((items, index) => {
+            const imageSrc = items.product.image != null ? findImageSrc(items) : '';
+            imageListTemplate += `
+          <div class="col-start-${index} w-6 h-6 rounded-lg" style="margin-left:-${index * 5}px;">
+          <img src="${imageSrc.src}" class="rounded-[50%] border-[2px] border-white  object-cover h-6 w-6">
+        </div> `;
+          });
+        } else {
+          lineItems.forEach((items, index) => {
+            const imageSrc = items.product.image != null ? findImageSrc(items) : '';
+            if (index == 2) {
+              imageListTemplate += `<div class="col-start-3 flex w-6 h-6 bg-canvas border-gray-300 border-[2px] rounded-[50%] ml-[-10px] justify-center items-center">
+            <span class="text-sm">+${productCount - 2}</span>
+          </div>`;
+            } else if (index <= 1)
+              imageListTemplate += `
+          <div class="col-start-${index} w-6 h-6 rounded-lg" style="margin-left:-${index * 5}px;">
+          <img src="${imageSrc.src}" class="rounded-[50%] border-[2px] border-white  object-cover h-6 w-6">
+        </div> `;
+          });
+        }
+        return imageListTemplate;
+      }
+
+      function imageGrid(lineItems, productCount) {
+        let imageGridTemplate = ``;
+        if (productCount === 1) {
+          lineItems.forEach((items, index) => {
+            const imageSrc = items.product.image != null ? findImageSrc(items) : '';
+            imageGridTemplate += `
+            <div class="col-span-full row-span-full rounded-md">
+            <img src="${
+              items.product.image == null
+                ? '{{ 'callbackimage.png' | asset_url }}'
+                : imageSrc.src
+            }" class="rounded-lg w-full h-full aspect-square object-cover">
+            </div> `;
+          });
+        } else if (productCount === 2) {
+          lineItems.forEach((items, index) => {
+            const Imagesrc = items.product.image != null ? findImageSrc(items) : '';
+            imageGridTemplate += `
+            <div class="col-span-${index} row-span-full rounded-lg">
+              <img src="${Imagesrc.src}" class="rounded-lg w-full h-full object-cover" style="aspect-ratio: 1/2.08;">
+            </div> `;
+          });
+        } else if (productCount === 3) {
+          lineItems.forEach((items, index) => {
+            const Imagesrc = items.product.image != null ? findImageSrc(items) : '';
+            const rowvalue = index == 0 ? 'row-start-1' : 'row-start-2';
+            imageGridTemplate += `
+            <div class="col-start-${index == 1 ? 2 : 1} ${index == 1 ? 'row-span-full' : rowvalue} rounded-lg">
+              <img src="${Imagesrc.src}" class="rounded-lg w-full h-full aspect-square object-cover">
+            </div> `;
+          });
+        } else if (productCount === 4) {
+          lineItems.forEach((items, index) => {
+            const Imagesrc = items.product.image != null ? findImageSrc(items) : '';
+            const rowvalue = index == 0 ? 'row-start-1' : 'row-start-2';
+            imageGridTemplate += `
+          <div class="col-start-${index + 1} row-span-${index + 1}  rounded-lg">
+            <img src="${Imagesrc.src}" class="rounded-lg w-full h-full aspect-square object-cover">
+          </div> `;
+          });
+        } else {
+          lineItems.forEach((items, index) => {
+            const Imagesrc = items.product.image != null ? findImageSrc(items) : '';
+            if (index == 3) {
+              imageGridTemplate += `
+            <div class="flex w-full h-full aspect-square bg-canvas rounded-lg justify-center items-center">
+              <span class="text-sm">+${productCount - 3} products</span>
+            </div>`;
+            } else if (index <= 2) {
+              imageGridTemplate += `
+            <div class="col-start-${index == 0 ? 0 : 2} row-span-${index == 0 ? 1 : 2} rounded-lg">
+              <img src="${Imagesrc.src}" class="rounded-lg w-full h-full aspect-square object-cover">
+            </div> `;
+            }
+          });
+        }
+        return imageGridTemplate;
+      }
+
+      function renderOrdersInGrid(Orders) {
+        const productGridView = document.querySelector('.productGridView');
+        let gridTemplate = '';
+
+        Orders.forEach((info) => {
+          const orderStatusDetails = getOrderStatus(info);
+          const gridOrderStatusIcon = orderStatusDetails[0];
+          const gridOrderStatus = orderStatusDetails[1];
+
+          const lastUpdated = getLastUpdatedText(gridOrderStatus);
+          const productCount = info.lineItems.length;
+
+          const imageGridTemplate = imageGrid(info.lineItems, productCount);
+
+          gridTemplate += `
+          <a href=" ${info.customerUrl}" class="">
+            <div class="flex w-full h-auto border-outer border-ink border-solid bg-canvas-light p-[21px] text-ink rounded-lg hover:drop-shadow-lg">
+              <div class="w-full h-full">
+                <div class="bg-canvas p-[21px]  mb-[21px] h-[77px] rounded-md flex ">
+                    <div class="flex justify-start items-start pt-[1px]">
+                      ${gridOrderStatusIcon}                      
+                    </div>
+                    <div class="flex flex-col ml-1 items-start gap-[2px]">  
+                        <p class="text-xs">${gridOrderStatus}</p>                     
+                        <p class="text-xs">${lastUpdated} ${gridOrderStatus == 'Cancelled' ? `${info.cancelledAt}` : `${info.createdAt}`}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 grid-rows-2 gap-[11px] text-sm">
+                  ${imageGridTemplate}
+                </div>
+                <div class="grid grid-cols-1 grid-rows-2 mt-[21px] gap-2">
+                <div>
+                    <div>
+                    <span class="text-sm">
+                      ${itemcount(info.lineItemCount,gridOrderStatus,true)}
+                    </span>
+                    </div>
+                    <span class="text-[#707070] text-sm">Order ${info.name}</span>
+                </div>
+                <div>
+                    <span class="text-sm">&#8377;${gridOrderStatus == 'Cancelled' ? '0.00' : `${info.totalPrice}`}</span>
+                </div>
+                </div>
+              
+                <button class="w-full mt-[3px] p-2 flex justify-center items-center text-base text-canvas border border-ink  rounded-full cta-color" onclick="event.preventDefault();addingProperties('${
+                  info.name
+                }')">
+                  Buy again
+                </button>
+              </div>
+            </div>
+          </a>
+        `;
+        });
+        productGridView.innerHTML = gridTemplate;
+      }
+
+      function itemcount(productCount,OrderStatus,itemStatus){
+        if(OrderStatus == 'Cancelled'){
+          return `0 ${itemStatus ? 'items' : '' }`
+        }else{
+          return `${productCount} ${itemStatus ? `${productCount > 1 ? 'items' : 'item'}`: ''}`
+        }
+      }
+
+    
+
+      function renderOrdersInList(Orders) {
+        const productListView = document.querySelector('.productListView');
+        let listTemplate = '';
+        listTemplate += `
+        <div class="flex justify-center">
+          <table class='w-full  max-w-139 bg-canvas-light rounded-lg border-outer border-ink '>
+            <tr class="border-b-inner  border-ink ">
+              <th class="w-17"></th>
+              <th class="w-1/4">
+                <div class="flex py-[14px] pr-[21px] pl-[10px] text-ink text-sm">  
+                  Order
+                </div>
+              </th>
+              <th class="w-1/12 ">
+                <div class="flex py-[14px] pr-[21px] text-ink text-sm">  
+                  Items
+                </div>
+              </th>
+              <th>
+                <div class="flex py-[14px] pr-[21px] text-ink text-sm">  
+                  Total
+                </div>
+              </th>
+            </tr>
+            ${creatingListView(Orders)}
+          </table> 
+        </div>
+        `;
+        productListView.innerHTML = listTemplate;
+      }
+
+      function creatingListView(Orders) {
+        let template=``
+        Orders.forEach((info) => {
+          const orderStatusDetails = getOrderStatus(info);
+          const listOrderStatusIcon = orderStatusDetails[0];
+          const listOrderStatus = orderStatusDetails[1];
+      
+
+          const lastUpdated = getLastUpdatedText(listOrderStatus);
+          const productCount = info.lineItems.length;
+          const imageListTemplate = imageList(info.lineItems, productCount);
+
+          template += `
+          <tr class="bg-canvas-light hover:bg-gray-200 hover:cursor-pointer border-b-inner border-solid border-ink" onclick="window.location='${info.customerUrl}'">
+            <td>
+              <div class="grid grid-cols-3 grid-rows-1 p-[21px]"> 
+              ${imageListTemplate}
+              </div>
+            </td>
+            <td>
+              <div class="flex flex-col py-[21px] pr-[21px] pl-[10px]">
+                <div class="flex items-center relative">
+                  <span class="text-base font-normal underline underline-offset-2 text-ink-link hover:text-[#105989]">${info.name}</span>
+                  <button class="p-[10px]" onclick="event.stopPropagation(); showBuybutton('${info.id}');">
+                    <svg class="down${info.id} hover:text-[#105989]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" class="a8x1wuo _1fragem17 _1fragem36 _1fragem9s _1fragem9r" focusable="false" aria-hidden="true" style="width: 10px;height: 10px;fill: none;stroke: #1773B0;stroke-width: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="m11.9 5.6-4.653 4.653a.35.35 0 0 1-.495 0L2.1 5.6"></path></svg> 
+                    <svg class="up${info.id} hidden hover:text-[#105989]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" focusable="false" aria-hidden="true" style="width: 10px;height: 10px;fill: none;stroke: #1773B0;stroke-width: 2px;transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" d="m11.9 5.6-4.653 4.653a.35.35 0 0 1-.495 0L2.1 5.6"></path></svg>                                                           
+                  </button>                    
+                  <button class="button${info.id} absolute text-[#1773B0] hover:text-[#105989] bg-white justify-center items-center hidden px-[16px] py-[21px] top-3 left-[50px] drop-shadow-xl border-[2px] rounded-lg"  onclick="event.stopPropagation();addingProperties('${info.name}')">
+                    <span class="text-sm ">Buy again</span>
+                  </button>                    
+                </div>
+                <div class="flex items-center">
+                  <span class="text-sm tracking-3">${listOrderStatus} - ${listOrderStatus == 'Cancelled' ? `${info.cancelledAt}` : `${info.createdAt}`}</span>
+                </div>
+              </div>
+            </td>
+            <td class="text-sm">${itemcount(info.lineItemCount,listOrderStatus,false)}</td>
+            <td>
+              <div class="flex py-[21px] pr-[21px] text-sm">
+                &#8377;${listOrderStatus == 'Cancelled' ? '0.00' : `${info.totalPrice}`}
+              </div>
+            </td>  
+          </tr>
+        `;
+        });
+        return template;
+      }
+
+      function getOrderStatus(info) {
+        let orderStatus = '';
+        let orderStatusIcon = '';
+        let isProductGiftCard = false;
+
+        for (let item of info.lineItems) {
+          isProductGiftCard = item.gift_card;
+          break;
+        }
+
+        if (info.fulfillmentStatus === 'fulfilled') {
+          orderStatus = isProductGiftCard ? 'Delivered' : 'On the Way';
+          orderStatusIcon = isProductGiftCard
+            ? `{% render 'deliver-icon'%}`
+            : `{% render 'on-the-way-icon'%}`;
+        } else {
+          orderStatus = info.cancelled ? 'Cancelled' : 'Confirmed';
+          orderStatusIcon = info.cancelled
+            ? `{%- render 'cancel' -%}`
+            : `{% render 'confirmed-icon'%}`;
+        }
+        
+        return [orderStatusIcon, orderStatus];
+      }
+
+      function getLastUpdatedText(orderStatusInfo) {
+        if (orderStatusInfo === 'Cancelled' || orderStatusInfo === 'Delivered') {
+          return '';
+        } else {
+          return 'Last updated';
+        }
+      }
+
+    </script>
+
+    {% comment %} modal code here for sorting {% endcomment %}
+    <div id="modal" class="hidden bg-[rgba(0,0,0,0.4)] absolute w-full h-full overflow-hidden top-0 left-0">
+      <div class="fixed top-0 right-0 bottom-0 md:min-w-[320px] bg-white overflow-y-auto p-4 shadow-lg z-50">
+        <div class="h-full">
+          <div class="flex justify-between mb-[21px]">
+            <span class="mt-0 text-lg font-bold">Sort</span>
+            <button onclick="hideModal()">
+              <svg
+                class="w-[18px] h-[18px]"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="options text-sm"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const options = [
+        { value: 'newestToOldest', label: 'Newest to Oldest' },
+        { value: 'oldestToNewest', label: 'Oldest to Newest' },
+        { value: 'orderNumHighToLow', label: 'Order number (high to low)' },
+        { value: 'orderNumLowToHigh', label: 'Order number (low to high)' },
+        { value: 'orderTotalHighToLow', label: 'Order total (high to low)' },
+        { value: 'orderTotalLowToHigh', label: 'Order total (low to high)' },
+      ];
+
+      const optionsContainer = document.querySelector('.options');
+
+      options.forEach((option) => {
+        const label = document.createElement('label');
+        label.classList.add('block', 'mb-2', 'hover:cursor-pointer');
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'sortOption';
+        input.value = option.value;
+        input.classList.add('mr-2', 'hover:cursor-pointer');
+        if (option.value === 'newestToOldest') {
+          input.checked = true;
+        }
+
+        const textNode = document.createTextNode(option.label);
+        label.appendChild(input);
+        label.appendChild(textNode);
+
+        optionsContainer.appendChild(label);
+      });
+    </script>
+
+    <div id="order-history-div" class="ac-container hide mt-0">
+      <div class="canvas border-t border-ink border-solid font-mono w-full p-3 md:py-4 md:px-5 ">
+        <div class="flex flex-col w-full items-center">
+          <div class="flex w-full h-5 max-w-139 items-center justify-between  md:mb-4">
+            <div>
+              <span class="text-lg font-semibold">Orders</span>
+            </div>
+            <div class="flex gap-2">
+              <button id="openModalBtn" onclick="showmodal()">
+                <img src="{{ 'sort-icon.svg' | asset_url }}" alt="sortingOption" class="w-[18px] h-[18px] ">
+              </button>
+              <div class="gap-1 p-1 hidden md:flex bg-gray-200 bg-opacity-20 rounded-md">
+                <button onclick="viewChange('grid')" class="gridView bg-white p-[5px] rounded-md bg-opacity-30 ">
+                  <svg
+                    class="gridViewButton w-[21px] h-[21px]  hover:text-[#1F8DD6] text-[#105989]"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                  </svg>
+                </button>
+                <button
+                  onclick="renderOrdersInList(ordersToDisplay); viewChange('list')"
+                  class="listView p-[5px] rounded-md bg-opacity-30 hover:text-opacity-100 text-opacity-50 text-black"
+                >
+                  <svg
+                    class="listViewButton w-[21px] h-[21px] hover:text-opacity-100 text-opacity-50 text-black"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="productGridView grid gap-[21px] mt-2 md:mt-0 max-w-139 w-full h-fit"
+            style="grid-template-columns: repeat(auto-fill, minmax(285px, 1fr))"
+          >
+            {% if customer.orders.size > 0 %}
+              {% comment %} {{customer.orders.size}} {% endcomment %}
+              {% paginate customer.orders by 100 %}
+                {% assign filterProduct = customer.orders %}
+                <script>
+                  
+                  
+                  
+
+                  let AllOrders = [];
+                  {% for order in filterProduct %}
+                    {% assign itemCount= 0 %}
+                    {% for item in order.line_items%}           
+                        {%assign itemCount= itemCount | plus:item.quantity%}
+                        {% assign itemCount= itemCount | minus:item.refunded_quantity%}
+                    {%endfor%}
+                    AllOrders.push({
+                      "name": `{{ order.name }}`,
+                      "id":`{{order.id}}`,
+                      "lineItems": {{ order.line_items | json }},
+                      "totalPrice": '{{- order.total_price | minus: order.total_refunded_amount | money_without_currency }}',
+                      "fulfillmentStatus": '{{ order.fulfillment_status}}',
+                      "tags": '{{ order.tags }}',
+                      "customerUrl": '{{ order.customer_url}}',
+                      "createdAt": `{{ order.created_at  | date: "%b %d" }}`,
+                      "cancelled": {{order.cancelled}},
+                      "metafield": {{order.metafields.updatedLineItems.lineItems | json}},
+                      "cancelledAt": `{{order.cancelled_at | date: '%b %-d'}}`,
+                      "subtotal_Line_items": {{order.subtotal_line_items | json}},
+                      "lineItemCount": `{{itemCount}}`
+                     
+                    });
+                   
+                  {% endfor %}                
+
+                </script>
+
+                {% assign pageSize = 24 %}
+                {% for order in customer.orders limit: {{pageSize}} %}
+                  {% assign isGiftCard = false %}
+                  {% assign productCount = order.line_items | size %}
+                  {% for item in order.line_items %}
+                    {% assign isProductGiftCard = item.product.gift_card? %}
+                    {% if isProductGiftCard %}
+                      {% assign isGiftCard = true %}
+                      {% break %}
+                    {% endif %}
+                  {% endfor %}
+                  {% assign total_price = order.total_price | money_without_currency %}
+                  <a href="{{ order.customer_url }}">
+                    <div class="flex w-full h-fit border-outer border-ink border-solid bg-canvas-light p-[21px] rounded-lg hover:drop-shadow-lg">
+                      <div class="w-full h-full">
+                        <div class="bg-canvas flex p-[21px] rounded-md mb-[21px] h-[77px] text-ink">
+                          {% if order.fulfillment_status == 'fulfilled' %}
+                            {% if isProductGiftCard %}
+                              {% assign orderStatus = 'Delivered' %}
+                            {% else %}
+                              {% assign orderStatus = 'On the Way' %}
+                            {% endif %}
+                          {% else %}
+                            {% if order.cancelled == true %}
+                              {% assign orderStatus = 'Cancelled' %}
+                            {% else %}
+                              {% assign orderStatus = 'Confirmed' %}
+                            {% endif %}
+                          {% endif %}
+                          <div class="flex justify-start items-start pt-[1px]">
+                            <div class="w-[21px] h-[21px]">
+                              {% case orderStatus %}
+                                {% when 'Confirmed' %}
+                                  {% render 'confirmed-icon' %}
+                                {% when 'Cancelled' %}
+                                  {%- render 'cancel' -%}
+                                {% when 'On the Way' %}
+                                  {% render 'on-the-way-icon' %}
+                                {% when 'Delivered' %}
+                                  {% render 'deliver-icon' %}
+                              {% endcase %}
+                            </div>
+                          </div>
+                          <div class="flex flex-col ml-1 items-start gap-[2px]">
+                            <p class="text-xs">{{ orderStatus }}</p>
+                            <p class="text-xs">
+                              {% if orderStatus != 'Cancelled' and orderStatus != 'Delivered' %}
+                                Last updated
+                              {% endif %}
+                              {{ order.created_at | date: '%b %d' }}
+                            </p>
+                          </div>
+                        </div>
+                        <div class="grid grid-cols-2 grid-rows-2 gap-[7px] md:gap-[11px]">
+                          {% case productCount %}
+                            {% when 1 %}
+                              {% for line_item in order.line_items %}
+                                <div class="col-span-full row-span-full rounded-md">
+                                  {% if line_item.image %}
+                                    <img
+                                      src="{{ line_item.image | image_url: width:317, height: 317, crop: "center"}}"
+                                      class="rounded-lg w-full"
+                                      alt="{{line_item.title}}"
+                                    >
+                                  {% else %}
+                                    <img
+                                      src="{{ 'callbackimage.png' | asset_url }}"
+                                      alt="callbackimage"
+                                      alt="{{line_item.title}}"
+                                      class="rounded-lg w-full"
+                                    >
+                                  {% endif %}
+                                </div>
+                              {%- endfor -%}
+                            {% when 2 %}
+                              {% for line_item in order.line_items %}
+                                {% if forloop.index == 1 %}
+                                  {% assign colValue = forloop.index %}
+                                {% else %}
+                                  {% assign colValue = 2 %}
+                                {% endif %}
+
+                                <div class="col-start-{{colValue}}  row-span-full rounded-lg">
+                                  <img
+                                    src="{{ line_item.image | image_url: width:153, height: 317, crop: "center"}}"
+                                    class="rounded-lg w-full"
+                                    alt="{{line_item.title}}"
+                                  >
+                                </div>
+                              {%- endfor -%}
+
+                            {% when 3 %}
+                              {% for line_item in order.line_items %}
+                                {% case forloop.index %}
+                                  {% when 1 %}
+                                    {% assign colValue = 1 %}
+                                    {% assign heightValue = 153 %}
+                                    {% assign rowValue = 'row-start-1' %}
+
+                                  {% when 2 %}
+                                    {% assign colValue = 2 %}
+                                    {% assign heightValue = 317 %}
+                                    {% assign rowValue = 'row-span-full' %}
+
+                                  {% when 3 %}
+                                    {% assign colValue = 1 %}
+                                    {% assign heightValue = 153 %}
+                                    {% assign rowValue = 'row-start-2' %}
+                                {% endcase %}
+                                <div class="col-start-{{colValue}} {{rowValue}} rounded-lg">
+                                  <img
+                                    src="{{ line_item.image | image_url: width:153, height:heightValue, crop: "center"}}"
+                                    class="rounded-lg w-full"
+                                    alt="{{line_item.title}}"
+                                  >
+                                </div>
+                              {%- endfor -%}
+
+                            {% when 4 %}
+                              {% for line_item in order.line_items %}
+                                {% if forloop.index == 1 %}
+                                  {% assign colValue = forloop.index %}
+                                {% else %}
+                                  {% assign colValue = 2 %}
+                                {% endif %}
+                                <div class="col-start-{{colValue}}  row-span-{{colValue}} rounded-lg">
+                                  <img
+                                    src="{{ line_item.image | image_url: width:153, height: 153, crop: "center"}}"
+                                    class="rounded-lg w-full"
+                                    alt="{{line_item.title}}"
+                                  >
+                                </div>
+                              {%- endfor -%}
+
+                            {% else %}
+                              {% for line_item in order.line_items %}
+                                {% case forloop.index %}
+                                  {% when 1 %}
+                                    {% assign colValue = forloop.index %}
+                                  {% when 2 %}
+                                    {% assign colValue = 2 %}
+                                  {% when 3 %}
+                                    {% assign colValue = 2 %}
+                                  {% when 4 %}
+                                    <div class="flex w-full h-full bg-canvas rounded-lg justify-center items-center">
+                                      <span class="text-sm">+{{ productCount | minus: 3 }} products</span>
+                                    </div>
+                                    {% break %}
+                                {% endcase %}
+                                <div class="col-start-{{colValue}}  row-span-{{colValue}} rounded-lg">
+                                  <img
+                                    src="{{ line_item.image | image_url: width:153, height: 153, crop: "center"}}"
+                                    class="rounded-lg w-full"
+                                    alt="{{line_item.title}}"
+                                  >
+                                </div>
+                              {%- endfor -%}
+                          {% endcase %}
+                        </div>
+                        {% assign itemCount = 0 %}
+                        <div class="grid grid-cols-1 grid-rows-2 mt-[21px] gap-2">
+                          {% for item in order.line_items %}
+                            {% assign itemCount = itemCount | plus: item.quantity %}
+                            {% assign itemCount = itemCount | minus: item.refunded_quantity %}
+                          {% endfor %}
+                          <div>
+                            <div class="text-sm">
+                              <span>
+                                {% if order.cancelled == true %}
+                                  <span>0 items</span>
+                                {% else %}
+                                  <span>{{ itemCount }} </span>
+                                  {%- if productCount == 1 %}item{% else %}items{% endif -%}
+                                {% endif %}
+                              </span>
+                            </div>
+                            <span class="text-sm	text-[#707070]">
+                              {{- 'customer.order.order' | t }}
+                              {{ order.name -}}
+                            </span>
+                          </div>
+                          <div>
+                            <span class="text-sm">
+                              {% if order.cancelled == true %}
+                                &#8377;0.00
+                              {% else %}
+                                &#8377;
+                                {{- order.total_price | minus: order.total_refunded_amount | money_without_currency }}
+                              {% endif %}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          class="w-full mt-[3px] p-2 flex justify-center items-center text-base text-canvas border border-ink  rounded-full cta-color"
+                          onclick="event.preventDefault();addingProperties('{{order.name}}')"
+                        >
+                          {{ 'customer.order.buy_again' | t | upcase }}
+                        </button>
+                      </div>
+                    </div>
+                  </a>
+
+                  <script>
+                    async function addingProperties(ordername) {
+                      let allLineItems = [];
+                      const order = AllOrders.find((info) => info.name === ordername);
+                      if (!order) {
+                        return;
+                      }
+
+                      const items = order.metafield ? order.metafield : order.lineItems;
+
+                      items.forEach((item, index) => {
+                        const properties = order.metafield ? item.properties : arrayToObject(item.properties);
+                        allLineItems.push({
+                          id: item.variant_id,
+                          properties: properties,
+                          quantity: item.quantity,
+                          isLast: index === items.length - 1,
+                        });
+                      });
+
+                      for (let i = 0; i < allLineItems.length; i++) {
+                        const info = allLineItems[i];
+                        await addTocart(info.id, info.properties, info.quantity, info.isLast);
+                      }
+                    }
+
+                    function arrayToObject(properties) {
+                      let propertiesObject = {};
+                      properties.forEach((info) => {
+                        propertiesObject[info[0]] = info[1];
+                      });
+                      return propertiesObject;
+                    }
+                  </script>
+                {% endfor %}
+              {% endpaginate %}
+            {% else %}
+              <p class="text-lg font-mono">{{ 'customer.orders.none' | t }}</p>
+            {% endif %}
+          </div>
+
+          {% comment %} LIST VIEW {% endcomment %}
+          <div class="productListView hidden w-full"></div>
+        </div>
+        <div id="load-more-container" class=" flex w-full justify-center mt-3">
+          {% if filterProduct.size > pageSize %}
+            <button
+              id="load-more-button"
+              class="bg-canvas-light  px-4 py-2  text-base text-canvas border border-ink  rounded-full cta-color"
+            >
+              {{ 'customer.order.load_more' | t | upcase}}
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var pageSize = {{pageSize}};
+      var loadMoreSize = 6;
+      var currentPage = 1;
+      var ordersDisplayed = pageSize;
+      let ordersToDisplay =AllOrders.slice(0, ordersDisplayed);
+
+      document.getElementById('load-more-button').addEventListener('click', function() {
+        ordersToDisplay = AllOrders.slice(0, ordersDisplayed + loadMoreSize);
+        console.log(ordersToDisplay)
+
+        renderOrdersInGrid(ordersToDisplay)
+        renderOrdersInList(ordersToDisplay)
+
+        ordersDisplayed = ordersToDisplay.length;
+
+        if (ordersDisplayed >= {{filterProduct.size}}) {
+          document.getElementById('load-more-container').style.display = 'none';
+        }
+      });
+    </script>
+
+    <!-- measurements -->
+    <div id="measurements-div" class="ac-container flex-1 hide mt-4 md:mt-0">
+      <div class="flex flex-wrap flex-col md:flex-row ">
+        {% for measurement in customer.metafields.measurements %}
+          {% assign fitGroupId = measurement.first %}
+          {% assign fitGroup = shop.metaobjects.fit_group_definitions[fitGroupId] %}
+          {% assign createdOn = measurement.last.createdOn %}
+          {% assign measurements = measurement.last.measurements %}
+
+          {% assign measurementsCount = measurements | size %}
+
+          {% comment %}
+            {% for fit in measurement.last.fit %}
+              <div class="border border-solid border-neutral-800 p-2 md:p-3 font-mono text-left {% if forloop.first == false %}mt-4{% endif %} md:mt-0 md:mb-4 md:mr-4">
+                <p class="font-activist text-lg uppercase">{{ fitGroup.display_title }}:</p>
+                <p class="text-xs mb-2">{{ fitGroup.description }}</p>
+                {% comment %} <p class="capitalize">Fit: {{ fit.first }}</p> {% endcomment %}
+                {% comment %} <p class="capitalize">Size: {{ fit.first | upcase }}</p> {% endcomment %}
+                {% for value in fit.last %}
+                  {% if value.first != 'createdOn' %}
+                    <p class="capitalize">{{ value.first | replace: "-", " " }}: <span class="lowercase">{{ value.last }}</span></p>
+                  {% else %}
+                    {% assign createdOn = value.last %}
+                  {% endif %}
+                {% endfor %}
+
+                {% for value in measurements %}
+                  <p class="capitalize">{{ value.first | replace: "-", " " }}: <span class="lowercase">{{ value.last }}</span></p>
+                {% endfor %}
+                <p class="text-xs mt-2 -mb-1 text-right text-ink-link">Updated On: {{ createdOn }}</p>
+              </div>
+            {% endfor %}
+          {% endcomment %}
+
+          {% if fitGroup.display_title != blank and measurementsCount > 0 %}
+            <div class="border border-solid border-neutral-800 p-2 md:p-3 font-mono text-left {% if forloop.first == false %}mt-4{% endif %} md:mt-0 md:mb-4 md:mr-4">
+              <p class="font-activist text-lg uppercase">{{ fitGroup.display_title }}:</p>
+              <p class="text-xs mb-2">{{ fitGroup.description }}</p>
+
+              {% for value in measurements %}
+                <p class="capitalize">
+                  {{ value.first | replace: '-', ' ' }}: <span class="lowercase">{{ value.last }}</span>
+                </p>
+              {% endfor %}
+              <p class="text-xs mt-2 -mb-1 text-right text-ink-link">Updated On: {{ createdOn }}</p>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  
+  
+  
+  
+
+  
+  var initialurl = '{{ shop.url | append: routes.account_url }}';
+
+  if(window.location.href == initialurl){
+    var profile = document.getElementById('profile-div');
+    var profile_menu = document.getElementById('profile-menu-item');
+    profile_menu.classList.add('active');
+    profile.classList.remove('hide');
+    profile.classList.add('show');
+  }
+  else{
+    var profile = document.getElementById('profile-div');
+    var order_history = document.getElementById('order-history-div'); 
+    var measurement = document.getElementById('measurements-div'); 
+    var profile_menu = document.getElementById('profile-menu-item');
+    var order_history_menu = document.getElementById('order-history-menu-item');
+    var measurement_menu = document.getElementById('measurement-menu-item');
+
+
+    var lastparturl = window.location.href.split("#");
+
+    if(lastparturl[1] == 'profile'){
+      profile_menu.classList.add('active');
+      profile.classList.remove('hide');
+      profile.classList.add('show');
+    }
+    else if(lastparturl[1] == 'order-history'){
+      order_history_menu.classList.add('active');
+      order_history.classList.remove('hide');
+      order_history.classList.add('block');
+    }
+    else if(lastparturl[1] == 'measurements'){
+      measurement_menu.classList.add('active');
+      measurement.classList.remove('hide');
+      measurement.classList.add('show');
+    }
+
+  }
+  
+
+  function myFunction(e,contain,url) {
+    
+    window.location.href = '{{ shop.url | append: routes.account_url }}'+url;
+
+    var elems = document.querySelector(".active");
+
+    var x = document.getElementById(contain);
+
+    var cont = document.querySelectorAll('.ac-container');
+    cont.forEach((ele)=>{
+      ele.classList.add('hide');
+    });
+
+    x.classList.remove('hide');
+    x.classList.add('block');
+    
+
+    if(elems !==null){
+      elems.classList.remove("active");
+    }
+    e.target.classList.add("active");
+
+  }
+
+  var productMetafield = {};
+  var lineItemUnits = [
+    {% for order in customer.orders %}
+      {% for item in order.line_items %}
+        {% for pMF in item.product.metafields.measurements.base_dimensions.value %}
+          `{{ pMF['unit'] }}`,
+          {% break %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+  ];
+   
+  var lineItemChosenSizeType = [
+    {% for order in customer.orders %}
+      {% if order.metafields.updatedLineItems.lineItems != blank %}
+        {% for item in order.metafields.updatedLineItems.lineItems %}
+          {
+            "title": `{{ item.variant_title | handleize }}`,
+            "size": `{{ item.properties['Size'] | handleize }}`,
+            "fit": `{{ item.properties['Fit'] | strip }}`
+          },
+        {% endfor %}
+      {% else %}
+        {% for item in order.line_items %}
+          {
+            "title": `{{ item.product.title | handleize }}`,
+            "type": `{{ item.product.type | handleize }}`,
+            "size": `{{ item.properties['Size'] | handleize }}`,
+            "fit": `{{ item.properties['Fit'] | strip }}`
+          },
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+      ];
+
+  {% for order in customer.orders %}
+    {% for item in order.line_items %}
+        {% assign titleKey = item.product.title | handleize %}
+        {% for prod in item.product.metafields.measurements.base_dimensions.value %}
+          productMetafield[`{{ titleKey }}`] = JSON.parse(`{{ prod | json }}`);
+        {% endfor %}
+    {% endfor %}
+  {% endfor %}
+
+  let index = 0;
+
+	for(const l of lineItemChosenSizeType) {
+		const fitArr = productMetafield[l["title"]]["fit"];
+		const defaultUnit = productMetafield[l["title"]]["unit"]
+		let chosenFitSize;
+
+		const lFitHandleized = l.fit.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '')
+
+		for(const fit of fitArr) {
+			const fitNameHandleized = fit.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '');
+        if(fitNameHandleized == lFitHandleized) {
+            chosenFitSize = fit.size;
+            break
+        }
+		}
+
+		const defaultMeasurements = chosenFitSize[l.size];
+
+		for(const measure of defaultMeasurements) {
+			const lineItemPropertyUI = document.getElementById(`property-${measure.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '')}-${index}`);
+			const lineItemUnit = lineItemUnits[index]
+			const lineItemValues = document.getElementById(`property-${measure.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '')}-${index}-value`).innerHTML.split("/");
+
+			let lineItemValue = 0
+
+			if(lineItemUnit == "cm") {
+				lineItemValue = lineItemValues[0].replace("cm", "").replace("in", "").trim();
+			} else {
+				lineItemValue = lineItemValues[1].replace("cm", "").replace("in", "").trim();
+			}
+
+			if(lineItemValue != measure.value) {
+				lineItemPropertyUI.classList.add("text-primary-300");
+				var brush = '<svg class="inline-block sixteenx" style="margin-left:0;margin-top:-8px" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6.5564" y="11.9913" width="2.89604" height="13.0462" transform="rotate(-135 6.5564 11.9913)" stroke="#6D8B73" stroke-width="0.5"/><circle cx="3.08222" cy="13.5646" r="1.71175" stroke="#6D8B73" stroke-width="0.5"/><path d="M3.12736 15.2017L0.267844 15.2017L1.6976 12.7253L3.12736 15.2017Z" stroke="#6D8B73" stroke-width="0.5"/></svg>';
+				lineItemPropertyUI.innerHTML += brush;
+			}
+		}
+
+		const defaultStyle = productMetafield[l["title"]]["style"];
+
+		if( defaultStyle != undefined ) {
+      for(const mfStyle of defaultStyle) {
+        const headingHandleize = mfStyle.heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '');
+        const lineItemPropertyUI = document.getElementById(`property-${headingHandleize}-${index}`);
+        const lineItemPropertyValue = document.getElementById(`property-${headingHandleize}-${index}-value`);
+        const defaultValue = mfStyle.options[0].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '')
+        const lineItemValue = lineItemPropertyValue.innerText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '').replace(/^-/, '')
+  
+        if(defaultValue != lineItemValue) {
+          lineItemPropertyUI.classList.add('text-primary-300');
+          var brush = '<svg class="inline-block" style="margin-left:0;margin-top:-8px" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6.5564" y="11.9913" width="2.89604" height="13.0462" transform="rotate(-135 6.5564 11.9913)" stroke="#6D8B73" stroke-width="0.5"/><circle cx="3.08222" cy="13.5646" r="1.71175" stroke="#6D8B73" stroke-width="0.5"/><path d="M3.12736 15.2017L0.267844 15.2017L1.6976 12.7253L3.12736 15.2017Z" stroke="#6D8B73" stroke-width="0.5"/></svg>';
+          lineItemPropertyUI.innerHTML += brush;
+        }
+      }
+    }
+
+		index += 1;
+	}
+
+
+
+
+
+</script>
